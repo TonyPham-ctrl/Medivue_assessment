@@ -1,14 +1,17 @@
 from src.models import payload
-from src.utils import validate_post_payload
-
+from src.service import validation
+from src.service import StorageService
 
 def process(payload: payload.ReadingWrapper):
-    is_valid, message = validate_post_payload(payload)
+    status_code, message = validation.validate_post_payload(payload)
 
-    if not is_valid:
+    if status_code == 200:
+        StorageService().save_reading(payload)
+        return {"message": "Reading ingested successfully"}
+    else:
         raise ValueError(message)
     
-    
+
 
 
 

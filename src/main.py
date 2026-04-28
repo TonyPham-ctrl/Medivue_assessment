@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.storage.sqlite_db import init_db
 
 # Import routers
-from src.controllers.ingestion_controller import router as ingestion_router
-from src.controllers.patient_controller import router as patient_router
+from src.api.ingestion_controller import router as ingestion_router
+from src.api.patient_controller import router as patient_router
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -12,6 +13,8 @@ def create_app() -> FastAPI:
         version="1.0.0"
     )
 
+    init_db()
+    
     app.include_router(ingestion_router, prefix="", tags=["Ingestion"])
     app.include_router(patient_router, prefix="", tags=["Patients"])
 
