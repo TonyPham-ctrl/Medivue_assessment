@@ -1,9 +1,9 @@
 from src.models import payload
 from src.service import validation
-from src.service import StorageService
+from src.service.storage_service import StorageService
 
 class IngestionService:
-    def process(payload: payload.ReadingWrapper):
+    def process(self, payload: payload.ReadingWrapper):
         status_code, message = validation.validate_post_payload(payload)
 
         if status_code == 200:
