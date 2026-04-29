@@ -1,7 +1,7 @@
 from src.models.enums import IngestionStatus, AlertType
 from src.service.storage_service import storage_service
 from src.service.patient_glucose_service import patient_glucose_service
-from src.config import VALID_SIGNAL_QUALITIES, BATTERY_PCT_MIN, BATTERY_PCT_MAX, GLUCOSE_MGDL_MIN, STAT_ANOMALY_STDDEV_MULTIPLIER
+from src.config import VALID_SIGNAL_QUALITIES, GLUCOSE_MGDL_MIN, BATTERY_PCT_LOW_THRESHOLD, STAT_ANOMALY_STDDEV_MULTIPLIER
 
 
 class ValidationService:
@@ -20,10 +20,6 @@ class ValidationService:
 
         if payload.reading.glucose_mgdl <= GLUCOSE_MGDL_MIN:
             response_message += f"glucose_mgdl must be greater than {GLUCOSE_MGDL_MIN} \n"
-            response_status = IngestionStatus.INVALID
-
-        if not (BATTERY_PCT_MIN <= payload.reading.battery_pct <= BATTERY_PCT_MAX):
-            response_message += f"battery_pct must be between {BATTERY_PCT_MIN} and {BATTERY_PCT_MAX} \n"
             response_status = IngestionStatus.INVALID
 
         if payload.reading.signal_quality not in VALID_SIGNAL_QUALITIES:
@@ -56,6 +52,9 @@ class ValidationService:
                 return AlertType.GLUCOSE_SPIKE if glucose > mean else AlertType.GLUCOSE_DROP
 
         return AlertType.NORMAL
+
+    def check_battery(self, payload) -> bool:
+        return payload.reading.battery_pct <= BATTERY_PCT_LOW_THRESHOLD
 
 
 validation_service = ValidationService()

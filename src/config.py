@@ -1,15 +1,15 @@
 
 # Database
-DB_READING_PATH = "data/cgm.db"
-DB_PATIENT_GLUCOSE_PATH = "data/patient_glucose.db"
+DB_PATH = "data/medivue.db"
 DB_READING_TABLE = "readings"
 DB_PATIENT_GLUCOSE_TABLE = "patient_glucose"
 
 # Validation
 VALID_SIGNAL_QUALITIES = ["good", "poor", "degraded"]
-BATTERY_PCT_MIN = 0
-BATTERY_PCT_MAX = 20
 GLUCOSE_MGDL_MIN = 0
+
+# Battery
+BATTERY_PCT_LOW_THRESHOLD = 20
 
 # Statistical anomaly detection
 STAT_MIN_SAMPLES = 3

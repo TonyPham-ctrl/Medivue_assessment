@@ -43,3 +43,12 @@ class ValidationAlert(Alert):
 
     def _build_message(self) -> str:
         return f"[invalid] Patient {self.patient_id} — invalid reading at {self.recorded_at}: {self.validation_message}"
+
+
+class BatteryAlert(Alert):
+    def __init__(self, patient_id: str, recorded_at: str, battery_pct: int):
+        super().__init__(patient_id, recorded_at)
+        self.battery_pct = battery_pct
+
+    def _build_message(self) -> str:
+        return f"[low_battery] Patient {self.patient_id} — device battery at {self.battery_pct}% at {self.recorded_at}"

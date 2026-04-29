@@ -2,7 +2,7 @@ from src.models.payload import ReadingWrapper
 from src.models.enums import IngestionStatus, AlertType
 from src.service.validation import validation_service
 from src.service.storage_service import storage_service
-from src.service.alert import Alert, GlucoseAlert, ValidationAlert
+from src.service.alert import Alert, GlucoseAlert, ValidationAlert, BatteryAlert
 from src.storage.session_memory import session_memory
 
 
@@ -21,9 +21,16 @@ class IngestionService:
 
         storage_service.save_reading(payload)
 
+        response = {"message": "Reading ingested"}
+
         alert_type = validation_service.check_thresholds(payload)
         if alert_type != AlertType.NORMAL:
-            alert_message = self._dispatch_alert(GlucoseAlert(payload.patient_id, str(payload.reading.recorded_at), alert_type))
-            return validation_status, {"message": "Reading ingested", "threshold": alert_type.value, "alert": alert_message}
+            response["threshold"] = alert_type.value
+            response["alert"] = self._dispatch_alert(GlucoseAlert(payload.patient_id, str(payload.reading.recorded_at), alert_type))
+        else:
+            response["threshold"] = alert_type.value
 
-        return validation_status, {"message": "Reading ingested", "threshold": alert_type.value}
+        if validation_service.check_battery(payload):
+            response["battery_alert"] = self._dispatch_alert(BatteryAlert(payload.patient_id, str(payload.reading.recorded_at), payload.reading.battery_pct))
+
+        return validation_status, response

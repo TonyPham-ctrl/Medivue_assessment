@@ -7,10 +7,6 @@ class IngestionStatus(Enum):
     INVALID = "invalid"
     ERROR = "error"
 
-class AlertStatus(Enum):
-    SENT = "sent"
-    FAILED = "failed"
-
 class AlertType(Enum):
     NORMAL = "normal"
     LOW_GLUCOSE = "low_glucose"

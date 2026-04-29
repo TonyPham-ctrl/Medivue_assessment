@@ -5,8 +5,8 @@ from datetime import datetime
 from src.models.payload import ReadingWrapper, ReadingPayload
 from src.models.enums import IngestionStatus, AlertType
 from src.service.ingestion_service import IngestionService
-from src.storage.sqlite_db import init_readings_table, init_patient_glucose_table
-from src.config import DB_READING_PATH, DB_PATIENT_GLUCOSE_PATH
+from src.storage.sqlite_db import init_db
+from src.config import DB_PATH
 from scripts.seed import seed
 
 
@@ -53,12 +53,10 @@ def run_test(name, payload, expect_status, expect_threshold=None, expect_alert=T
 print("=" * 60)
 print("STEP 1 — clearing database")
 print("=" * 60)
-for path in [DB_READING_PATH, DB_PATIENT_GLUCOSE_PATH]:
-    if os.path.exists(path):
-        os.remove(path)
-        print(f"  deleted {path}")
-init_readings_table()
-init_patient_glucose_table()
+if os.path.exists(DB_PATH):
+    os.remove(DB_PATH)
+    print(f"  deleted {DB_PATH}")
+init_db()
 
 print("\n" + "=" * 60)
 print("STEP 2 — seeding fake data")
@@ -116,10 +114,11 @@ run_test(
 )
 
 run_test(
-    "Invalid: battery_pct = 21 (above max of 20)",
+    "battery_pct = 21 (above low threshold) — expect SUCCESS, no battery alert",
     make_payload("dev-a", "p001", 100.0, 21, "good", datetime(2026, 5, 1, 13, 0, 0)),
-    expect_status=IngestionStatus.INVALID,
-    expect_alert=True,
+    expect_status=IngestionStatus.SUCCESS,
+    expect_threshold=AlertType.NORMAL,
+    expect_alert=False,
 )
 
 run_test(

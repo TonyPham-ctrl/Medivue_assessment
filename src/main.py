@@ -1,14 +1,10 @@
 from fastapi import FastAPI
-from src.storage.sqlite_db import init_readings_table, init_patient_glucose_table
+from src.storage.sqlite_db import init_db
 from src.config import APP_TITLE, APP_DESCRIPTION, APP_VERSION
 
 # Import routers
 from src.api.ingestion_controller import router as ingestion_router
 # from src.api.patient_controller import router as patient_router
-
-def init_db():
-    init_readings_table()
-    init_patient_glucose_table()
 
 def create_app() -> FastAPI:
     app = FastAPI(

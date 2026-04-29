@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from datetime import datetime
-from src.storage.sqlite_db import init_readings_table, init_patient_glucose_table
+from src.storage.sqlite_db import init_db
 from src.service.storage_service import StorageService
 from src.service.patient_glucose_service import PatientGlucoseService
 
@@ -57,8 +57,7 @@ class _FakeThreshold:
 
 
 def seed():
-    init_readings_table()
-    init_patient_glucose_table()
+    init_db()
 
     pg = PatientGlucoseService()
     for t in THRESHOLDS:
