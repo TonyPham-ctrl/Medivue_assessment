@@ -1,7 +1,7 @@
 from src.models.enums import IngestionStatus, AlertType
 from src.service.storage_service import storage_service
 from src.service.patient_glucose_service import patient_glucose_service
-from src.config import VALID_SIGNAL_QUALITIES, BATTERY_PCT_MIN, BATTERY_PCT_MAX, GLUCOSE_MGDL_MIN
+from src.config import VALID_SIGNAL_QUALITIES, BATTERY_PCT_MIN, BATTERY_PCT_MAX, GLUCOSE_MGDL_MIN, STAT_ANOMALY_STDDEV_MULTIPLIER
 
 
 def validate_post_payload(payload):
@@ -41,10 +41,17 @@ def check_thresholds(payload) -> AlertType:
         return AlertType.UNKNOWN_GLUCOSE
 
     lower_bound, upper_bound = threshold
+    glucose = payload.reading.glucose_mgdl
 
-    if payload.reading.glucose_mgdl < lower_bound:
+    if glucose < lower_bound:
         return AlertType.LOW_GLUCOSE
-    elif payload.reading.glucose_mgdl > upper_bound:
+    elif glucose > upper_bound:
         return AlertType.HIGH_GLUCOSE
+
+    stats = storage_service.get_patient_glucose_stats(payload.patient_id, payload.reading.recorded_at)
+    if stats:
+        mean, stdev = stats
+        if stdev > 0 and abs(glucose - mean) > STAT_ANOMALY_STDDEV_MULTIPLIER * stdev:
+            return AlertType.GLUCOSE_SPIKE if glucose > mean else AlertType.GLUCOSE_DROP
 
     return AlertType.NORMAL

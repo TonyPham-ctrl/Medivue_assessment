@@ -8,8 +8,12 @@ DB_PATIENT_GLUCOSE_TABLE = "patient_glucose"
 # Validation
 VALID_SIGNAL_QUALITIES = ["good", "poor", "degraded"]
 BATTERY_PCT_MIN = 0
-BATTERY_PCT_MAX = 100
+BATTERY_PCT_MAX = 20
 GLUCOSE_MGDL_MIN = 0
+
+# Statistical anomaly detection
+STAT_MIN_SAMPLES = 3
+STAT_ANOMALY_STDDEV_MULTIPLIER = 2
 
 # Session memory
 MAX_SESSION_SIZE = 100

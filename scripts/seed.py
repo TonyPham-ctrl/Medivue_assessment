@@ -12,6 +12,7 @@ THRESHOLDS = [
     {"patient_id": "p001", "lower_bound": 70.0,  "upper_bound": 140.0},
     {"patient_id": "p002", "lower_bound": 80.0,  "upper_bound": 160.0},
     {"patient_id": "p003", "lower_bound": 60.0,  "upper_bound": 120.0},
+    {"patient_id": "p004", "lower_bound": 70.0,  "upper_bound": 200.0},
 ]
 
 
@@ -26,6 +27,12 @@ READINGS = [
     {"device_id": "dev-b", "patient_id": "p002", "glucose_mgdl": 55.0,  "battery_pct": 88, "signal_quality": "poor",      "recorded_at": datetime(2026, 4, 30, 10, 0, 0)},
     # p003 — normal
     {"device_id": "dev-c", "patient_id": "p003", "glucose_mgdl": 95.0,  "battery_pct": 75, "signal_quality": "degraded",  "recorded_at": datetime(2026, 4, 30, 7, 45, 0)},
+    # p004 — tightly clustered baseline for stat anomaly testing
+    {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 100.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 8,  0, 0)},
+    {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 101.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 9,  0, 0)},
+    {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl":  99.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 10, 0, 0)},
+    {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 100.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 11, 0, 0)},
+    {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 102.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 12, 0, 0)},
 ]
 
 

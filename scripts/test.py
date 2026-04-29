@@ -73,14 +73,14 @@ print("=" * 60)
 
 run_test(
     "Normal glucose (within bounds)",
-    make_payload("dev-a", "p001", 105.0, 90, "good", datetime(2026, 5, 1, 8, 0, 0)),
+    make_payload("dev-a", "p001", 105.0, 15, "good", datetime(2026, 5, 1, 8, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.NORMAL,
     expect_alert=False,
 )
 run_test(
     "High glucose (above upper bound)",
-    make_payload("dev-a", "p001", 180.0, 85, "good", datetime(2026, 5, 1, 9, 0, 0)),
+    make_payload("dev-a", "p001", 180.0, 15, "good", datetime(2026, 5, 1, 9, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.HIGH_GLUCOSE,
     expect_alert=True,
@@ -88,7 +88,7 @@ run_test(
 
 run_test(
     "Low glucose (below lower bound)",
-    make_payload("dev-b", "p002", 50.0, 80, "good", datetime(2026, 5, 1, 10, 0, 0)),
+    make_payload("dev-b", "p002", 50.0, 15, "good", datetime(2026, 5, 1, 10, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.LOW_GLUCOSE,
     expect_alert=True,
@@ -96,42 +96,42 @@ run_test(
 
 run_test(
     "Duplicate reading (same device + timestamp)",
-    make_payload("dev-a", "p001", 100.0, 85, "good", datetime(2026, 4, 30, 8, 0, 0)),
+    make_payload("dev-a", "p001", 100.0, 15, "good", datetime(2026, 4, 30, 8, 0, 0)),
     expect_status=IngestionStatus.DUPLICATE,
     expect_alert=True,
 )
 
 run_test(
     "Invalid: empty device_id",
-    make_payload("", "p001", 100.0, 85, "good", datetime(2026, 5, 1, 11, 0, 0)),
+    make_payload("", "p001", 100.0, 15, "good", datetime(2026, 5, 1, 11, 0, 0)),
     expect_status=IngestionStatus.INVALID,
     expect_alert=True,
 )
 
 run_test(
     "Invalid: glucose = 0 (boundary edge)",
-    make_payload("dev-a", "p001", 0.0, 85, "good", datetime(2026, 5, 1, 12, 0, 0)),
+    make_payload("dev-a", "p001", 0.0, 15, "good", datetime(2026, 5, 1, 12, 0, 0)),
     expect_status=IngestionStatus.INVALID,
     expect_alert=True,
 )
 
 run_test(
-    "Invalid: battery_pct = 101",
-    make_payload("dev-a", "p001", 100.0, 101, "good", datetime(2026, 5, 1, 13, 0, 0)),
+    "Invalid: battery_pct = 21 (above max of 20)",
+    make_payload("dev-a", "p001", 100.0, 21, "good", datetime(2026, 5, 1, 13, 0, 0)),
     expect_status=IngestionStatus.INVALID,
     expect_alert=True,
 )
 
 run_test(
     "Invalid: signal_quality = 'excellent'",
-    make_payload("dev-a", "p001", 100.0, 85, "excellent", datetime(2026, 5, 1, 14, 0, 0)),
+    make_payload("dev-a", "p001", 100.0, 15, "excellent", datetime(2026, 5, 1, 14, 0, 0)),
     expect_status=IngestionStatus.INVALID,
     expect_alert=True,
 )
 
 run_test(
     "Unknown patient (no threshold configured)",
-    make_payload("dev-z", "p999", 100.0, 85, "good", datetime(2026, 5, 1, 15, 0, 0)),
+    make_payload("dev-z", "p999", 100.0, 15, "good", datetime(2026, 5, 1, 15, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.UNKNOWN_GLUCOSE,
     expect_alert=True,
@@ -139,10 +139,18 @@ run_test(
 
 run_test(
     "Glucose exactly at upper bound (140.0) — expect NORMAL",
-    make_payload("dev-a", "p001", 140.0, 85, "good", datetime(2026, 5, 1, 16, 0, 0)),
+    make_payload("dev-a", "p001", 140.0, 15, "good", datetime(2026, 5, 1, 16, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.NORMAL,
     expect_alert=False,
+)
+
+run_test(
+    "Stat anomaly: within threshold but >2 std from patient mean — expect GLUCOSE_SPIKE",
+    make_payload("dev-d", "p004", 115.0, 15, "good", datetime(2026, 5, 1, 17, 0, 0)),
+    expect_status=IngestionStatus.SUCCESS,
+    expect_threshold=AlertType.GLUCOSE_SPIKE,
+    expect_alert=True,
 )
 
 

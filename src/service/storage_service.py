@@ -1,6 +1,8 @@
 import sqlite3
+import statistics
 from datetime import datetime
 from src.storage.sqlite_db import READING_PATH, READING_DB
+from src.config import STAT_MIN_SAMPLES
 
 
 class StorageService:
@@ -39,6 +41,24 @@ class StorageService:
         rows = cursor.fetchall()
         conn.close()
         return rows
+
+    def get_patient_glucose_stats(self, patient_id: str, exclude_timestamp: datetime = None):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        if exclude_timestamp:
+            cursor.execute(f"""
+                SELECT glucose FROM {READING_DB}
+                WHERE patient_id = ? AND recorded_at != ?
+            """, (patient_id, exclude_timestamp.strftime("%Y-%m-%d %H:%M:%S")))
+        else:
+            cursor.execute(f"""
+                SELECT glucose FROM {READING_DB} WHERE patient_id = ?
+            """, (patient_id,))
+        values = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        if len(values) < STAT_MIN_SAMPLES:
+            return None
+        return statistics.mean(values), statistics.stdev(values)
 
     def has_duplicate(self, device_id: str, recorded_at: datetime) -> bool:
         conn = sqlite3.connect(self.db_path)
