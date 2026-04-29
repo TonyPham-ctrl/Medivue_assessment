@@ -2,6 +2,10 @@ import sqlite3
 
 READING_PATH = "data/cgm.db"
 PATIENT_GLUCOSE_PATH = "data/patient_glucose.db"
+
+READING_DB = "readings"
+PATIENT_GLUCOSE_DB = "patient_glucose"
+
 def init_readings_table():
     conn = sqlite3.connect(READING_PATH)
     cursor = conn.cursor()
