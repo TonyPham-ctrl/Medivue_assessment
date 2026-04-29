@@ -1,6 +1,14 @@
 from abc import ABC, abstractmethod
-from src.models.enums import ThresholdStatus
+from src.models.enums import AlertType
 from src.storage.session_memory import session_memory
+
+_ALERT_MESSAGES = {
+    AlertType.LOW_GLUCOSE:      "glucose is critically low",
+    AlertType.HIGH_GLUCOSE:     "glucose is critically high",
+    AlertType.UNKNOWN_GLUCOSE:  "no glucose threshold configured for this patient",
+    AlertType.GLUCOSE_SPIKE:    "rapid glucose spike detected",
+    AlertType.GLUCOSE_DROP:     "rapid glucose drop detected",
+}
 
 
 class Alert(ABC):
@@ -11,20 +19,21 @@ class Alert(ABC):
     @abstractmethod
     def _build_message(self) -> str: ...
 
-    def send_alert(self):
-        devices = session_memory.get_device(self.patient_id)
+    def send_alert(self) -> str:
         message = self._build_message()
-        for device in devices:
+        for device in session_memory.get_device(self.patient_id):
             device.contact(message)
+        return message
 
 
-class ThresholdAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, threshold_status: ThresholdStatus):
+class GlucoseAlert(Alert):
+    def __init__(self, patient_id: str, recorded_at: str, alert_type: AlertType):
         super().__init__(patient_id, recorded_at)
-        self.threshold_status = threshold_status
+        self.alert_type = alert_type
 
     def _build_message(self) -> str:
-        return f"Patient {self.patient_id} glucose is {self.threshold_status.value} at {self.recorded_at}"
+        description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
+        return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} at {self.recorded_at}"
 
 
 class ValidationAlert(Alert):
@@ -33,4 +42,4 @@ class ValidationAlert(Alert):
         self.validation_message = validation_message
 
     def _build_message(self) -> str:
-        return f"Invalid reading from patient {self.patient_id} at {self.recorded_at}: {self.validation_message}"
+        return f"[invalid] Patient {self.patient_id} — invalid reading at {self.recorded_at}: {self.validation_message}"

@@ -2,14 +2,14 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class READING_PAYLOAD(BaseModel):
+class ReadingPayload(BaseModel):
     glucose_mgdl: float
     battery_pct: int
     signal_quality: str  # "good" | "poor" | "degraded"
     recorded_at: datetime
 
 
-class READING_WRAPPER(BaseModel):
+class ReadingWrapper(BaseModel):
     device_id: str
     patient_id: str
-    reading: READING_PAYLOAD
+    reading: ReadingPayload

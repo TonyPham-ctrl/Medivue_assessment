@@ -1,15 +1,13 @@
-from src.service.storage_service import PatientGlucoseService, StorageService
-from src.models.enums import IngestionStatus, ThresholdStatus
+from src.models.enums import IngestionStatus, AlertType
+from src.service.storage_service import storage_service
+from src.service.patient_glucose_service import patient_glucose_service
 from src.config import VALID_SIGNAL_QUALITIES, BATTERY_PCT_MIN, BATTERY_PCT_MAX, GLUCOSE_MGDL_MIN
 
 
-def is_duplicate(device_id, recorded_at):
-    readings = StorageService().get_readings_by_device(device_id)
-    return any(str(reading[5]) == str(recorded_at) for reading in readings)
-
 def validate_post_payload(payload):
-    response_message = "Success"
+    response_message = ""
     response_status = IngestionStatus.SUCCESS
+
     if not payload.device_id or not isinstance(payload.device_id, str):
         response_message += "device_id must be a non-empty string \n"
         response_status = IngestionStatus.INVALID
@@ -30,23 +28,23 @@ def validate_post_payload(payload):
         response_message += f"signal_quality must be one of {VALID_SIGNAL_QUALITIES} \n"
         response_status = IngestionStatus.INVALID
 
-    if is_duplicate(payload.device_id, payload.reading.recorded_at):
+    if storage_service.has_duplicate(payload.device_id, payload.reading.recorded_at):
         response_message += "Duplicate reading detected \n"
         response_status = IngestionStatus.DUPLICATE
 
     return response_status, response_message
 
 
-def check_thresholds(payload):
-    patient_glucose_threshold = PatientGlucoseService().query_patient_glucose(payload.patient_id)
-    if not patient_glucose_threshold:
-        return ThresholdStatus.UNKNOWN
+def check_thresholds(payload) -> AlertType:
+    threshold = patient_glucose_service.query_patient_glucose(payload.patient_id)
+    if not threshold:
+        return AlertType.UNKNOWN_GLUCOSE
 
-    lower_bound, upper_bound = patient_glucose_threshold
+    lower_bound, upper_bound = threshold
 
     if payload.reading.glucose_mgdl < lower_bound:
-        return ThresholdStatus.LOW
+        return AlertType.LOW_GLUCOSE
     elif payload.reading.glucose_mgdl > upper_bound:
-        return ThresholdStatus.HIGH
+        return AlertType.HIGH_GLUCOSE
 
-    return ThresholdStatus.NORMAL
+    return AlertType.NORMAL

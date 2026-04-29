@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from src.models import payload
+from src.models.payload import ReadingWrapper
 from src.models.enums import IngestionStatus
 from src.service.ingestion_service import IngestionService
 
@@ -15,7 +15,7 @@ _STATUS_MAP = {
 }
 
 @router.post("/readings")
-def ingest(payload: payload.READING_WRAPPER):
+def ingest(payload: ReadingWrapper):
     try:
         status, response = service.process(payload)
     except Exception as e:

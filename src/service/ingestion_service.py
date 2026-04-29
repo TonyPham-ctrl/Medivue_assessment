@@ -1,28 +1,29 @@
-from src.models import payload
-from src.models.enums import IngestionStatus, ThresholdStatus
+from src.models.payload import ReadingWrapper
+from src.models.enums import IngestionStatus, AlertType
 from src.service import validation
-from src.service.storage_service import StorageService
-from src.service.alert import Alert, ThresholdAlert, ValidationAlert
+from src.service.storage_service import storage_service
+from src.service.alert import Alert, GlucoseAlert, ValidationAlert
 from src.storage.session_memory import session_memory
 
 
 class IngestionService:
 
-    def _dispatch_alert(self, alert: Alert):
+    def _dispatch_alert(self, alert: Alert) -> str:
         session_memory.add_alert(alert.patient_id, alert)
-        alert.send_alert()
+        return alert.send_alert()
 
-    def process(self, payload: payload.READING_WRAPPER):
+    def process(self, payload: ReadingWrapper):
         validation_status, validation_message = validation.validate_post_payload(payload)
 
         if validation_status != IngestionStatus.SUCCESS:
-            self._dispatch_alert(ValidationAlert(payload.patient_id, str(payload.reading.recorded_at), validation_message))
-            return validation_status, {"message": validation_message}
+            alert_message = self._dispatch_alert(ValidationAlert(payload.patient_id, str(payload.reading.recorded_at), validation_message))
+            return validation_status, {"message": validation_message, "alert": alert_message}
 
-        StorageService().save_reading(payload)
+        storage_service.save_reading(payload)
 
-        threshold_status = validation.check_thresholds(payload)
-        if threshold_status != ThresholdStatus.NORMAL:
-            self._dispatch_alert(ThresholdAlert(payload.patient_id, str(payload.reading.recorded_at), threshold_status))
+        alert_type = validation.check_thresholds(payload)
+        if alert_type != AlertType.NORMAL:
+            alert_message = self._dispatch_alert(GlucoseAlert(payload.patient_id, str(payload.reading.recorded_at), alert_type))
+            return validation_status, {"message": "Reading ingested", "threshold": alert_type.value, "alert": alert_message}
 
-        return validation_status, {"message": validation_message}
+        return validation_status, {"message": "Reading ingested", "threshold": alert_type.value}

@@ -7,17 +7,12 @@ class IngestionStatus(Enum):
     INVALID = "invalid"
     ERROR = "error"
 
-class ThresholdStatus(Enum):
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    UNKNOWN = "unknown"
-
 class AlertStatus(Enum):
     SENT = "sent"
     FAILED = "failed"
 
 class AlertType(Enum):
+    NORMAL = "normal"
     LOW_GLUCOSE = "low_glucose"
     HIGH_GLUCOSE = "high_glucose"
     UNKNOWN_GLUCOSE = "unknown_glucose"
