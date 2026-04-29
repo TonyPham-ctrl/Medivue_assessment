@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from src.storage.sqlite_db import init_readings_table, init_patient_glucose_table
 from src.config import APP_TITLE, APP_DESCRIPTION, APP_VERSION
 
