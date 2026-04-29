@@ -1,7 +1,4 @@
-"""
-Run from the project root:
-    python -m scripts.seed
-"""
+
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -11,15 +8,13 @@ from src.storage.sqlite_db import init_readings_table, init_patient_glucose_tabl
 from src.service.storage_service import StorageService
 from src.service.patient_glucose_service import PatientGlucoseService
 
-# --- Fake patient glucose thresholds ---
 THRESHOLDS = [
     {"patient_id": "p001", "lower_bound": 70.0,  "upper_bound": 140.0},
     {"patient_id": "p002", "lower_bound": 80.0,  "upper_bound": 160.0},
     {"patient_id": "p003", "lower_bound": 60.0,  "upper_bound": 120.0},
 ]
 
-# --- Fake readings ---
-# glucose outside bounds triggers an alert
+
 READINGS = [
     # p001 — normal
     {"device_id": "dev-a", "patient_id": "p001", "glucose_mgdl": 100.0, "battery_pct": 85, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 8,  0, 0)},
