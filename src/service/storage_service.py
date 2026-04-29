@@ -44,7 +44,6 @@ class StorageService:
             n, avg, avg_sq = cursor.fetchone()
         if not n or n < STAT_MIN_SAMPLES:
             return None
-        # sample standard deviation via aggregate moments: avoids fetching all rows
         pop_var = avg_sq - avg * avg
         sample_std = math.sqrt(max(0.0, pop_var * n / (n - 1)))
         return avg, sample_std
@@ -59,6 +58,20 @@ class StorageService:
             """, (device_id, recorded_at.strftime("%Y-%m-%d %H:%M:%S")))
             row = cursor.fetchone()
         return row is not None
+
+    def query_readings(self, patient_id: str, n: int = 12):
+        with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                SELECT device_id, glucose, battery_pct, signal_quality, recorded_at
+                FROM {DB_READING_TABLE}
+                WHERE patient_id = ?
+                ORDER BY recorded_at DESC
+                LIMIT ?
+            """, (patient_id, n))
+            readings = [dict(row) for row in cursor.fetchall()]
+        return readings
 
 
 storage_service = StorageService()

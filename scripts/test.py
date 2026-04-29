@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, asyncio
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from datetime import datetime
@@ -32,7 +32,7 @@ def run_test(name, payload, expect_status, expect_threshold=None, expect_alert=T
     print(f"TEST: {name}")
     print(f"{'─'*60}")
     try:
-        status, response = IngestionService().process(payload)
+        status, response = asyncio.run(IngestionService().process(payload))
         print(f"  status   : {status}")
         print(f"  response : {response}")
 

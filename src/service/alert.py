@@ -35,6 +35,9 @@ class GlucoseAlert(Alert):
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
         return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} at {self.recorded_at}"
 
+    def _get_alert_type(self) -> str:
+        return self.alert_type.value
+
 
 class ValidationAlert(Alert):
     def __init__(self, patient_id: str, recorded_at: str, validation_message: str):

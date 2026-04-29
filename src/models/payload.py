@@ -13,3 +13,14 @@ class ReadingWrapper(BaseModel):
     device_id: str
     patient_id: str
     reading: ReadingPayload
+
+class ExportPayload(BaseModel):
+    device_id: str
+    patient_id: str
+    battery_pct: int
+    signal_quality: str
+    alert_status: str
+    percentage_in_range: float
+    summary: ReadingPayload
+
+

@@ -1,4 +1,5 @@
 
+from src.models.enums import IngestionStatus
 # Database
 DB_PATH = "data/medivue.db"
 DB_READING_TABLE = "readings"
@@ -19,3 +20,10 @@ STAT_ANOMALY_STDDEV_MULTIPLIER = 2
 APP_TITLE = "CGM Monitoring System"
 APP_DESCRIPTION = "Hello Medivue"
 APP_VERSION = "1.0.0"
+
+_STATUS_MAP = {
+    IngestionStatus.SUCCESS: 200,
+    IngestionStatus.INVALID: 400,
+    IngestionStatus.DUPLICATE: 409,
+    IngestionStatus.ERROR: 500,
+}
