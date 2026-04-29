@@ -19,7 +19,7 @@ def init_readings_table():
             glucose REAL,
             battery_pct INTEGER,
             signal_quality TEXT,
-            recorded_at TEXT
+            recorded_at DATETIME
         )
     """)
 

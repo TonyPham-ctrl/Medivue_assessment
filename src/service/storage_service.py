@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from src.storage.sqlite_db import READING_PATH, READING_DB
 
 
@@ -21,7 +22,7 @@ class StorageService:
             r.glucose_mgdl,
             r.battery_pct,
             r.signal_quality,
-            str(r.recorded_at)
+            r.recorded_at.strftime("%Y-%m-%d %H:%M:%S")
         ))
         conn.commit()
         conn.close()
@@ -39,14 +40,14 @@ class StorageService:
         conn.close()
         return rows
 
-    def has_duplicate(self, device_id: str, recorded_at: str) -> bool:
+    def has_duplicate(self, device_id: str, recorded_at: datetime) -> bool:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute(f"""
             SELECT 1 FROM {READING_DB}
             WHERE device_id = ? AND recorded_at = ?
             LIMIT 1
-        """, (device_id, str(recorded_at)))
+        """, (device_id, recorded_at.strftime("%Y-%m-%d %H:%M:%S")))
         row = cursor.fetchone()
         conn.close()
         return row is not None
