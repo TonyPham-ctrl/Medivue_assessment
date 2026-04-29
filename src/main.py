@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.storage.sqlite_db import init_readings_table, init_patient_glucose_table
+from src.config import APP_TITLE, APP_DESCRIPTION, APP_VERSION
 
 # Import routers
 from src.api.ingestion_controller import router as ingestion_router
@@ -12,9 +13,9 @@ def init_db():
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="CGM Monitoring System",
-        description="Hello Medivue",
-        version="1.0.0"
+        title=APP_TITLE,
+        description=APP_DESCRIPTION,
+        version=APP_VERSION
     )
 
     init_db()

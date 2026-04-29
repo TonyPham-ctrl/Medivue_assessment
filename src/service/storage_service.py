@@ -11,8 +11,8 @@ class StorageService:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
-            INSERT INTO {} (
+        cursor.execute(f"""
+            INSERT INTO {READING_DB} (
                 device_id,
                 patient_id,
                 glucose,
@@ -22,7 +22,6 @@ class StorageService:
             )
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            READING_DB,
             payload.device_id,
             payload.patient_id,
             r.glucose_mgdl,
@@ -38,12 +37,28 @@ class StorageService:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT device_id, patient_id, glucose, battery_pct, signal_quality, recorded_at
-            FROM {}
+            FROM {READING_DB}
             WHERE patient_id = ?
             ORDER BY recorded_at DESC
-        """, (READING_DB, patient_id))
+        """, (patient_id,))
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return rows
+
+    def get_readings_by_device(self, device_id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+            SELECT device_id, patient_id, glucose, battery_pct, signal_quality, recorded_at
+            FROM {READING_DB}
+            WHERE device_id = ?
+            ORDER BY recorded_at DESC
+        """, (device_id,))
 
         rows = cursor.fetchall()
         conn.close()
@@ -58,15 +73,14 @@ class PatientGlucoseService:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
-            INSERT OR REPLACE INTO {} (
+        cursor.execute(f"""
+            INSERT OR REPLACE INTO {PATIENT_GLUCOSE_DB} (
                 patient_id,
                 lower_bound,
                 upper_bound
             )
             VALUES (?, ?, ?)
         """, (
-            PATIENT_GLUCOSE_DB,
             patient_glucose.patient_id,
             patient_glucose.lower_bound,
             patient_glucose.upper_bound
@@ -74,16 +88,16 @@ class PatientGlucoseService:
 
         conn.commit()
         conn.close()
-    
+
     def query_patient_glucose(self, patient_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT lower_bound, upper_bound
-            FROM {}
+            FROM {PATIENT_GLUCOSE_DB}
             WHERE patient_id = ?
-        """, (PATIENT_GLUCOSE_DB, patient_id))
+        """, (patient_id,))
 
         row = cursor.fetchone()
         conn.close()
