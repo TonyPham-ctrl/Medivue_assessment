@@ -1,10 +1,10 @@
 
 import sqlite3
-from src.storage.sqlite_db import DB_PATH
+from src.storage.sqlite_db import READING_PATH
 
 
 def is_duplicate(device_id, recorded_at):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(READING_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
