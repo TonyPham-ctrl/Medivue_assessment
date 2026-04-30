@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
+from typing import Optional
 from src.models.payload import ReadingWrapper
 from src.models.enums import IngestionStatus, AlertType
 from src.service.validation import validation_service
 from src.service.storage_service import storage_service
-from src.service.alert import Alert, GlucoseAlert, ValidationAlert, BatteryAlert, DeviceHealthAlert
+from src.service.alert import Alert, GlucoseAlert, ValidationAlert, BatteryAlert, DeviceHealthAlert, LateReadingAlert
 from src.service.alert_state import alert_state_tracker
 from src.storage.session_memory import session_memory
+from src.config import LATE_READING_THRESHOLD_MINUTES
 
 
 class IngestionService:
@@ -20,7 +23,54 @@ class IngestionService:
         else:
             alert_state_tracker.update_state(patient_id, category, state)
 
-    async def process(self, payload: ReadingWrapper):
+    async def process_reading(
+        self, reading: ReadingWrapper, arrival_time: datetime
+    ) -> Optional[dict]:
+        """Detects late readings and returns an alert dict if a new alert was fired.
+
+        Correctness guarantees:
+        - Lateness is always computed from timestamps (arrival_time - recorded_at),
+          never inferred from arrival order.
+        - Idempotent: the same (patient_id, device_id, recorded_at) triple is only
+          processed once per session.
+        - State-based: only one ACTIVE late-reading alert is maintained per device;
+          repeat late readings suppress new alerts until the device recovers.
+        """
+        pid = reading.patient_id
+        did = reading.device_id
+        recorded_at = reading.reading.recorded_at
+
+        # Idempotency guard — atomic check-and-mark
+        if await session_memory.check_and_mark_late_seen(pid, did, recorded_at):
+            return None
+
+        # Normalise both timestamps to naive UTC so subtraction always works
+        # regardless of whether the client sends tz-aware or tz-naive datetimes.
+        def _naive_utc(dt: datetime) -> datetime:
+            if dt.tzinfo is not None:
+                return dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
+
+        lateness_seconds = (_naive_utc(arrival_time) - _naive_utc(recorded_at)).total_seconds()
+
+        if lateness_seconds <= LATE_READING_THRESHOLD_MINUTES * 60:
+            # On-time reading — resolve any prior active late alert for this device
+            if session_memory.get_late_alert_state(pid, did) == "ACTIVE":
+                await session_memory.set_late_alert_state(pid, did, "RESOLVED")
+            return None
+
+        lateness_minutes = int(lateness_seconds / 60)
+
+        # Suppress if an ACTIVE alert already exists for this device
+        if session_memory.get_late_alert_state(pid, did) == "ACTIVE":
+            return None
+
+        alert = LateReadingAlert(pid, did, recorded_at, arrival_time, lateness_minutes)
+        await session_memory.set_late_alert_state(pid, did, "ACTIVE")
+        await self._dispatch_alert(alert)
+        return alert.to_dict()
+
+    async def process(self, payload: ReadingWrapper, arrival_time: datetime):
         validation_status, validation_message = validation_service.validate_post_payload(payload)
 
         if validation_status != IngestionStatus.SUCCESS:
@@ -63,6 +113,11 @@ class IngestionService:
         health_state = validation_service.check_device_health(payload)
         await self._maybe_fire(pid, "device_health", health_state, now,
                                DeviceHealthAlert(pid, str(ts), health_state), response, "alert_device")
+
+        # 6. Late reading (event-time vs arrival-time, state-based, idempotent)
+        late_alert = await self.process_reading(payload, arrival_time)
+        if late_alert:
+            response["alert_late_reading"] = late_alert
 
         return validation_status, response
 

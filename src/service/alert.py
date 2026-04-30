@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from src.models.enums import AlertType
 from src.storage.session_memory import session_memory
 
@@ -74,3 +75,35 @@ class DeviceHealthAlert(Alert):
     def _build_message(self) -> str:
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
         return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} at {self.recorded_at}"
+
+
+class LateReadingAlert(Alert):
+    def __init__(
+        self,
+        patient_id: str,
+        device_id: str,
+        recorded_at: datetime,
+        arrival_time: datetime,
+        lateness_minutes: int,
+    ):
+        super().__init__(patient_id, str(recorded_at))
+        self.device_id = device_id
+        self.arrival_time = arrival_time
+        self.lateness_minutes = lateness_minutes
+
+    def _build_message(self) -> str:
+        return (
+            f"[LATE_READING] Patient {self.patient_id} device {self.device_id} — "
+            f"reading arrived {self.lateness_minutes} min late (recorded {self.recorded_at})"
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "patient_id": self.patient_id,
+            "device_id": self.device_id,
+            "type": "LATE_READING",
+            "severity": "WARNING",
+            "event_time": self.recorded_at,
+            "arrival_time": str(self.arrival_time),
+            "lateness_minutes": self.lateness_minutes,
+        }
