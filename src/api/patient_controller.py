@@ -11,7 +11,7 @@ service = ExportService()
 @router.get("/patients/{patient_id}/summary")
 async def get_patient_summary(patient_id: str):
     try:
-        export_payload = await service.process(patient_id)
+        export_payload = service.process(patient_id)
         response = {"patient_id": patient_id, "readings": export_payload}
         status = IngestionStatus.SUCCESS
     except Exception as e:

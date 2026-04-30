@@ -73,9 +73,12 @@ class IngestionService:
     async def process(self, payload: ReadingWrapper, arrival_time: datetime):
         validation_status, validation_message = validation_service.validate_post_payload(payload)
 
+        if validation_status == IngestionStatus.DUPLICATE:
+            return validation_status, {"message": validation_message}
+
         if validation_status != IngestionStatus.SUCCESS:
             alert_message = await self._dispatch_alert(
-                ValidationAlert(payload.patient_id, str(payload.reading.recorded_at), validation_message)
+                ValidationAlert(payload.patient_id, payload.reading.recorded_at, validation_message)
             )
             return validation_status, {"message": validation_message, "alert": alert_message}
 
@@ -91,28 +94,28 @@ class IngestionService:
         threshold_state = validation_service.check_glucose_threshold(payload)
         response["threshold"] = threshold_state.value
         await self._maybe_fire(pid, "glucose", threshold_state, now,
-                               GlucoseAlert(pid, str(ts), threshold_state), response, "alert_glucose")
+                               GlucoseAlert(pid, ts, threshold_state), response, "alert_glucose")
 
         # 2. Glucose trend (RAPID_DROP / RAPID_RISE / GLUCOSE_SPIKE / GLUCOSE_DROP)
         trend_state = validation_service.check_glucose_trend(payload)
         await self._maybe_fire(pid, "trend", trend_state, now,
-                               GlucoseAlert(pid, str(ts), trend_state), response, "alert_trend")
+                               GlucoseAlert(pid, ts, trend_state), response, "alert_trend")
 
         # 3. Sustained glucose condition (PERSISTENT_HYPOGLYCEMIA / PERSISTENT_HYPERGLYCEMIA)
         sustained_state = validation_service.check_sustained_glucose(payload)
         await self._maybe_fire(pid, "sustained", sustained_state, now,
-                               GlucoseAlert(pid, str(ts), sustained_state), response, "alert_sustained")
+                               GlucoseAlert(pid, ts, sustained_state), response, "alert_sustained")
 
         # 4. Battery (LOW_BATTERY / CRITICAL_BATTERY)
         battery_state = validation_service.check_battery_level(payload)
         await self._maybe_fire(pid, "battery", battery_state, now,
-                               BatteryAlert(pid, str(ts), payload.reading.battery_pct, battery_state),
+                               BatteryAlert(pid, ts, payload.reading.battery_pct, battery_state),
                                response, "alert_battery")
 
         # 5. Device health (SENSOR_DEGRADED / DEVICE_OFFLINE)
         health_state = validation_service.check_device_health(payload)
         await self._maybe_fire(pid, "device_health", health_state, now,
-                               DeviceHealthAlert(pid, str(ts), health_state), response, "alert_device")
+                               DeviceHealthAlert(pid, ts, health_state), response, "alert_device")
 
         # 6. Late reading (event-time vs arrival-time, state-based, idempotent)
         late_alert = await self.process_reading(payload, arrival_time)

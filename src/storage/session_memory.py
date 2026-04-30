@@ -1,5 +1,5 @@
 import asyncio
-from queue import Queue
+from collections import deque
 
 from src.models.devices import CommunicationDevice, Computer, Mobile
 from src.models.enums import StaffType
@@ -23,7 +23,7 @@ _default_admin_device = [
 
 class SessionMemory:
     def __init__(self):
-        self._alerts: dict[str, Queue] = {}
+        self._alerts: dict[str, deque] = {}
         self._device_map: dict[str, set[CommunicationDevice]] = {}
         # (patient_id, device_id, recorded_at) → prevents duplicate late-reading alerts
         self._seen_late_readings: set[tuple] = set()
@@ -37,10 +37,8 @@ class SessionMemory:
     async def add_alert(self, patient_id: str, alert):
         async with self._lock:
             if patient_id not in self._alerts:
-                self._alerts[patient_id] = Queue()
-            self._alerts[patient_id].put(alert)
-            if self._alerts[patient_id].qsize() > MAX_QUEUE_SIZE:
-                self._alerts[patient_id].get()
+                self._alerts[patient_id] = deque(maxlen=MAX_QUEUE_SIZE)
+            self._alerts[patient_id].append(alert)
 
     def get_alerts(self, patient_id: str):
         return self._alerts.get(patient_id, [])

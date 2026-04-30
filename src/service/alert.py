@@ -19,13 +19,18 @@ _ALERT_MESSAGES = {
     AlertType.CRITICAL_BATTERY:          "device battery critical (< 10%)",
     AlertType.SENSOR_DEGRADED:           "sensor signal degraded over consecutive readings",
     AlertType.DEVICE_OFFLINE:            "device was offline — gap detected in readings",
+    AlertType.LATE_READING:              "reading arrived late (> 15 min delay)",
 }
 
 
 class Alert(ABC):
-    def __init__(self, patient_id: str, recorded_at: str):
+    def __init__(self, patient_id: str, recorded_at: datetime):
         self.patient_id = patient_id
         self.recorded_at = recorded_at
+
+    @property
+    @abstractmethod
+    def type_label(self) -> str: ...
 
     @abstractmethod
     def _build_message(self) -> str: ...
@@ -38,9 +43,13 @@ class Alert(ABC):
 
 
 class GlucoseAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, alert_type: AlertType):
+    def __init__(self, patient_id: str, recorded_at: datetime, alert_type: AlertType):
         super().__init__(patient_id, recorded_at)
         self.alert_type = alert_type
+
+    @property
+    def type_label(self) -> str:
+        return self.alert_type.value
 
     def _build_message(self) -> str:
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
@@ -48,19 +57,27 @@ class GlucoseAlert(Alert):
 
 
 class ValidationAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, validation_message: str):
+    def __init__(self, patient_id: str, recorded_at: datetime, validation_message: str):
         super().__init__(patient_id, recorded_at)
         self.validation_message = validation_message
+
+    @property
+    def type_label(self) -> str:
+        return "validation_error"
 
     def _build_message(self) -> str:
         return f"[invalid] Patient {self.patient_id} — invalid reading at {self.recorded_at}: {self.validation_message}"
 
 
 class BatteryAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, battery_pct: int, alert_type: AlertType):
+    def __init__(self, patient_id: str, recorded_at: datetime, battery_pct: int, alert_type: AlertType):
         super().__init__(patient_id, recorded_at)
         self.battery_pct = battery_pct
         self.alert_type = alert_type
+
+    @property
+    def type_label(self) -> str:
+        return self.alert_type.value
 
     def _build_message(self) -> str:
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
@@ -68,9 +85,13 @@ class BatteryAlert(Alert):
 
 
 class DeviceHealthAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, alert_type: AlertType):
+    def __init__(self, patient_id: str, recorded_at: datetime, alert_type: AlertType):
         super().__init__(patient_id, recorded_at)
         self.alert_type = alert_type
+
+    @property
+    def type_label(self) -> str:
+        return self.alert_type.value
 
     def _build_message(self) -> str:
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
@@ -86,10 +107,14 @@ class LateReadingAlert(Alert):
         arrival_time: datetime,
         lateness_minutes: int,
     ):
-        super().__init__(patient_id, str(recorded_at))
+        super().__init__(patient_id, recorded_at)
         self.device_id = device_id
         self.arrival_time = arrival_time
         self.lateness_minutes = lateness_minutes
+
+    @property
+    def type_label(self) -> str:
+        return AlertType.LATE_READING.value
 
     def _build_message(self) -> str:
         return (
@@ -103,7 +128,7 @@ class LateReadingAlert(Alert):
             "device_id": self.device_id,
             "type": "LATE_READING",
             "severity": "WARNING",
-            "event_time": self.recorded_at,
+            "event_time": str(self.recorded_at),
             "arrival_time": str(self.arrival_time),
             "lateness_minutes": self.lateness_minutes,
         }
