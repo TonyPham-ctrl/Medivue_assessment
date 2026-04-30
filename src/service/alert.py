@@ -3,11 +3,21 @@ from src.models.enums import AlertType
 from src.storage.session_memory import session_memory
 
 _ALERT_MESSAGES = {
-    AlertType.LOW_GLUCOSE:      "glucose is critically low",
-    AlertType.HIGH_GLUCOSE:     "glucose is critically high",
-    AlertType.UNKNOWN_GLUCOSE:  "no glucose threshold configured for this patient",
-    AlertType.GLUCOSE_SPIKE:    "rapid glucose spike detected",
-    AlertType.GLUCOSE_DROP:     "rapid glucose drop detected",
+    AlertType.LOW_GLUCOSE:               "glucose is low (< 70 mg/dL)",
+    AlertType.CRITICAL_LOW_GLUCOSE:      "glucose is critically low (< 54 mg/dL)",
+    AlertType.HIGH_GLUCOSE:              "glucose is high (> 180 mg/dL)",
+    AlertType.CRITICAL_HIGH_GLUCOSE:     "glucose is critically high (> 250 mg/dL)",
+    AlertType.UNKNOWN_GLUCOSE:           "no glucose threshold configured for this patient",
+    AlertType.GLUCOSE_SPIKE:             "statistical glucose spike detected",
+    AlertType.GLUCOSE_DROP:              "statistical glucose drop detected",
+    AlertType.RAPID_RISE:                "rapid glucose rise (> 50 mg/dL in 30 min)",
+    AlertType.RAPID_DROP:                "rapid glucose drop (> 30 mg/dL in 15 min)",
+    AlertType.PERSISTENT_HYPOGLYCEMIA:   "persistent hypoglycemia (low glucose sustained > 15 min)",
+    AlertType.PERSISTENT_HYPERGLYCEMIA:  "persistent hyperglycemia (high glucose sustained > 30 min)",
+    AlertType.LOW_BATTERY:               "device battery low (< 20%)",
+    AlertType.CRITICAL_BATTERY:          "device battery critical (< 10%)",
+    AlertType.SENSOR_DEGRADED:           "sensor signal degraded over consecutive readings",
+    AlertType.DEVICE_OFFLINE:            "device was offline — gap detected in readings",
 }
 
 
@@ -35,9 +45,6 @@ class GlucoseAlert(Alert):
         description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
         return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} at {self.recorded_at}"
 
-    def _get_alert_type(self) -> str:
-        return self.alert_type.value
-
 
 class ValidationAlert(Alert):
     def __init__(self, patient_id: str, recorded_at: str, validation_message: str):
@@ -49,9 +56,21 @@ class ValidationAlert(Alert):
 
 
 class BatteryAlert(Alert):
-    def __init__(self, patient_id: str, recorded_at: str, battery_pct: int):
+    def __init__(self, patient_id: str, recorded_at: str, battery_pct: int, alert_type: AlertType):
         super().__init__(patient_id, recorded_at)
         self.battery_pct = battery_pct
+        self.alert_type = alert_type
 
     def _build_message(self) -> str:
-        return f"[low_battery] Patient {self.patient_id} — device battery at {self.battery_pct}% at {self.recorded_at}"
+        description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
+        return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} ({self.battery_pct}%) at {self.recorded_at}"
+
+
+class DeviceHealthAlert(Alert):
+    def __init__(self, patient_id: str, recorded_at: str, alert_type: AlertType):
+        super().__init__(patient_id, recorded_at)
+        self.alert_type = alert_type
+
+    def _build_message(self) -> str:
+        description = _ALERT_MESSAGES.get(self.alert_type, self.alert_type.value)
+        return f"[{self.alert_type.value}] Patient {self.patient_id} — {description} at {self.recorded_at}"

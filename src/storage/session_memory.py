@@ -1,8 +1,9 @@
 import asyncio
+from queue import Queue
 
 from src.models.devices import CommunicationDevice, Computer, Mobile
 from src.models.enums import StaffType
-
+from src.config import MAX_QUEUE_SIZE
 _default_admin_device = [
     Computer(
         device_id="admin-console",
@@ -22,7 +23,7 @@ _default_admin_device = [
 
 class SessionMemory:
     def __init__(self):
-        self._alerts: dict[str, list] = {}
+        self._alerts: dict[str, Queue] = {}
         self._device_map: dict[str, set[CommunicationDevice]] = {}
         self._lock = asyncio.Lock()
 
@@ -32,9 +33,11 @@ class SessionMemory:
     async def add_alert(self, patient_id: str, alert):
         async with self._lock:
             if patient_id not in self._alerts:
-                self._alerts[patient_id] = []
-            self._alerts[patient_id].append(alert)
-
+                self._alerts[patient_id] = Queue()
+            self._alerts[patient_id].put(alert)
+            if self._alerts[patient_id].qsize() > MAX_QUEUE_SIZE:
+                self._alerts[patient_id].get()
+                
     def get_alerts(self, patient_id: str):
         return self._alerts.get(patient_id, [])
 

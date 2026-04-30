@@ -33,6 +33,17 @@ READINGS = [
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl":  99.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 10, 0, 0)},
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 100.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 11, 0, 0)},
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 102.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 12, 0, 0)},
+
+    {"device_id": "dev-rdrop",        "patient_id": "p-rdrop",        "glucose_mgdl": 200.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1,  8,  0, 0)},
+    {"device_id": "dev-rrise",        "patient_id": "p-rrise",        "glucose_mgdl": 100.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1,  9,  0, 0)},
+    {"device_id": "dev-persis-hypo",  "patient_id": "p-persis-hypo",  "glucose_mgdl":  65.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1, 10,  0, 0)},
+    {"device_id": "dev-persis-hypo",  "patient_id": "p-persis-hypo",  "glucose_mgdl":  67.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1, 10,  5, 0)},
+    {"device_id": "dev-persis-hyper", "patient_id": "p-persis-hyper", "glucose_mgdl": 200.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1, 11,  0, 0)},
+    {"device_id": "dev-persis-hyper", "patient_id": "p-persis-hyper", "glucose_mgdl": 210.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1, 11, 10, 0)},
+    {"device_id": "dev-persis-hyper", "patient_id": "p-persis-hyper", "glucose_mgdl": 195.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1, 11, 20, 0)},
+    {"device_id": "dev-sensor",       "patient_id": "p-sensor",       "glucose_mgdl": 100.0, "battery_pct": 80, "signal_quality": "poor",     "recorded_at": datetime(2026, 6, 1, 12,  0, 0)},
+    {"device_id": "dev-sensor",       "patient_id": "p-sensor",       "glucose_mgdl": 100.0, "battery_pct": 80, "signal_quality": "degraded", "recorded_at": datetime(2026, 6, 1, 12,  5, 0)},
+    {"device_id": "dev-offline",      "patient_id": "p-offline",      "glucose_mgdl": 100.0, "battery_pct": 80, "signal_quality": "good",     "recorded_at": datetime(2026, 6, 1,  7,  0, 0)},
 ]
 
 

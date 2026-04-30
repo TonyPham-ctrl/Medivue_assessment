@@ -21,6 +21,6 @@ class ExportPayload(BaseModel):
     signal_quality: str
     alert_status: str
     percentage_in_range: float
-    summary: ReadingPayload
+    summary: list[ReadingPayload]
 
 

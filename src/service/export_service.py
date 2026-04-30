@@ -13,12 +13,17 @@ class ExportService:
         return (in_range_count / len(readings)) * 100
     
     def construct_reading_payload(self, reading: dict):
-        return ExportPayload.ReadingPayload(
-            glucose_mgdl=reading['glucose_mgdl'],
-            battery_pct=reading['battery_pct'],
-            signal_quality=reading['signal_quality'],
-            recorded_at=reading['recorded_at']
-        )
+        N = min(12, len(reading))
+        summaries = []
+        for r in reading[:N]:
+            summaries.append(ExportPayload.ReadingPayload(
+                glucose_mgdl=r['glucose_mgdl'],
+                battery_pct=r['battery_pct'],
+                signal_quality=r['signal_quality'],
+                recorded_at=r['recorded_at']
+            ))
+        return summaries
+
     
     def construct_export_payload(self, patient_id: str, readings: List):        
         alerts = session_memory.get_alerts(patient_id)
@@ -31,7 +36,7 @@ class ExportService:
             signal_quality=readings[0]['signal_quality'],
             alert_status=most_recent_alert._get_alert_type(),
             percentage_in_range=self.calculate_percentage_in_range(readings),
-            summary=self.construct_reading_payload(readings[0])
+            summary=self.construct_reading_payload(readings)
         )
 
     def process(self, patient_id: str):
