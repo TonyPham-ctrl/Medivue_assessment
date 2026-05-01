@@ -2,7 +2,7 @@ import math
 import sqlite3
 import contextlib
 from datetime import datetime, timedelta
-from src.config import DB_PATH, DB_READING_TABLE, STAT_MIN_SAMPLES
+from src.config import DB_PATH, DB_READING_TABLE, DB_PATIENT_GLUCOSE_TABLE, STAT_MIN_SAMPLES
 
 
 class StorageService:
@@ -92,6 +92,16 @@ class StorageService:
                 ORDER BY recorded_at DESC LIMIT ?
             """, (device_id, count))
             return [row[0] for row in cursor.fetchall()]
+
+    def get_patient_glucose_bounds(self, patient_id: str) -> tuple[float, float] | None:
+        with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                SELECT lower_bound, upper_bound FROM {DB_PATIENT_GLUCOSE_TABLE}
+                WHERE patient_id = ?
+            """, (patient_id,))
+            row = cursor.fetchone()
+        return (row[0], row[1]) if row else None
 
     def query_readings(self, patient_id: str):
         with contextlib.closing(sqlite3.connect(self.db_path)) as conn:

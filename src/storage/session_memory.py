@@ -3,7 +3,7 @@ from collections import deque
 
 from src.models.devices import CommunicationDevice, Computer, Mobile
 from src.models.enums import StaffType
-from src.config import MAX_QUEUE_SIZE
+from src.config import MAX_QUEUE_SIZE, MAX_SEEN_LATE_READINGS
 _default_admin_device = [
     Computer(
         device_id="admin-console",
@@ -27,8 +27,6 @@ class SessionMemory:
         self._device_map: dict[str, set[CommunicationDevice]] = {}
         # (patient_id, device_id, recorded_at) → prevents duplicate late-reading alerts
         self._seen_late_readings: set[tuple] = set()
-        # (patient_id, device_id) → "ACTIVE" | "RESOLVED"
-        self._late_alert_state: dict[tuple, str] = {}
         self._lock = asyncio.Lock()
 
     def get_device(self, patient_id: str) -> set[CommunicationDevice]:
@@ -52,14 +50,10 @@ class SessionMemory:
         async with self._lock:
             if key in self._seen_late_readings:
                 return True
+            if len(self._seen_late_readings) >= MAX_SEEN_LATE_READINGS:
+                self._seen_late_readings.pop()
             self._seen_late_readings.add(key)
             return False
 
-    def get_late_alert_state(self, patient_id: str, device_id: str) -> str | None:
-        return self._late_alert_state.get((patient_id, device_id))
-
-    async def set_late_alert_state(self, patient_id: str, device_id: str, state: str):
-        async with self._lock:
-            self._late_alert_state[(patient_id, device_id)] = state
 
 session_memory = SessionMemory()

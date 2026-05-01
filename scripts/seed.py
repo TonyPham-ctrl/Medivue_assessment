@@ -17,17 +17,11 @@ THRESHOLDS = [
 
 
 READINGS = [
-    # p001 — normal
     {"device_id": "dev-a", "patient_id": "p001", "glucose_mgdl": 100.0, "battery_pct": 85, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 8,  0, 0)},
-    # p001 — high
     {"device_id": "dev-a", "patient_id": "p001", "glucose_mgdl": 200.0, "battery_pct": 80, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 9,  0, 0)},
-    # p002 — normal
     {"device_id": "dev-b", "patient_id": "p002", "glucose_mgdl": 120.0, "battery_pct": 90, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 8, 30, 0)},
-    # p002 — low
     {"device_id": "dev-b", "patient_id": "p002", "glucose_mgdl": 55.0,  "battery_pct": 88, "signal_quality": "poor",      "recorded_at": datetime(2026, 4, 30, 10, 0, 0)},
-    # p003 — normal
     {"device_id": "dev-c", "patient_id": "p003", "glucose_mgdl": 95.0,  "battery_pct": 75, "signal_quality": "degraded",  "recorded_at": datetime(2026, 4, 30, 7, 45, 0)},
-    # p004 — tightly clustered baseline for stat anomaly testing
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 100.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 8,  0, 0)},
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl": 101.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 9,  0, 0)},
     {"device_id": "dev-d", "patient_id": "p004", "glucose_mgdl":  99.0, "battery_pct": 15, "signal_quality": "good",      "recorded_at": datetime(2026, 4, 30, 10, 0, 0)},

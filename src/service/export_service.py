@@ -3,13 +3,13 @@ from typing import List
 from src.models.payload import ExportPayload, ReadingPayload
 from src.service.storage_service import storage_service
 from src.storage.session_memory import session_memory
-
+from src.config import GLUCOSE_LOW, GLUCOSE_HIGH
 class ExportService:
 
     def calculate_percentage_in_range(self, readings: List) -> float:
         if not readings:
             return 0.0
-        in_range_count = sum(1 for r in readings if 70 <= r['glucose'] <= 180)
+        in_range_count = sum(1 for r in readings if GLUCOSE_LOW <= r['glucose'] <= GLUCOSE_HIGH)
         return (in_range_count / len(readings)) * 100
     
     def construct_reading_payload(self, reading: dict):

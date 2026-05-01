@@ -1,6 +1,6 @@
 import sqlite3
 import contextlib
-from src.config import DB_PATH, DB_READING_TABLE, DB_PATIENT_GLUCOSE_TABLE
+from src.config import DB_PATH, DB_READING_TABLE, DB_PATIENT_GLUCOSE_TABLE, DB_ALERT_STATE_TABLE
 
 
 def init_db():
@@ -31,5 +31,15 @@ def init_db():
                     patient_id TEXT UNIQUE,
                     lower_bound REAL,
                     upper_bound REAL
+                )
+            """)
+            conn.execute(f"""
+                CREATE TABLE IF NOT EXISTS {DB_ALERT_STATE_TABLE} (
+                    patient_id  TEXT NOT NULL,
+                    device_id   TEXT NOT NULL DEFAULT '',
+                    category    TEXT NOT NULL,
+                    state       TEXT NOT NULL,
+                    fired_at    TEXT,
+                    PRIMARY KEY (patient_id, device_id, category)
                 )
             """)

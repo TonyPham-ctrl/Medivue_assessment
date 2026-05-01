@@ -40,7 +40,8 @@ def run_test(name, payload, expect_status, expect_threshold=None, expect_keys=No
     print(f"TEST: {name}")
     print(f"{'─'*60}")
     try:
-        status, response = asyncio.run(IngestionService().process(payload))
+        arrival_time = payload.reading.recorded_at
+        status, response = asyncio.run(IngestionService().process(payload, arrival_time))
         print(f"  status   : {status}")
         print(f"  response : {response}")
 
@@ -116,7 +117,8 @@ run_test(
     "Duplicate reading (same device + timestamp as seeded record)",
     make_payload("dev-a", "p001", 100.0, 80, "good", datetime(2026, 4, 30, 8, 0, 0)),
     expect_status=IngestionStatus.DUPLICATE,
-    expect_keys=["alert"],
+    expect_keys=["message"],
+    reject_keys=["alert"],
 )
 
 
@@ -265,7 +267,7 @@ section("5 · GLUCOSE TREND ALERTS")
 
 run_test(
     "Rapid drop: >30 mg/dL fall in 15 min (200→160 in 10 min)",
-    # Seeded: dev-rdrop/p-rdrop at 08:00 glucose=200; drop to 160 at 08:10 = 40 mg/dL
+    # Seeded: dev-rdrop/p-rdrop at 08:00 glucose=200 drop to 160 at 08:10 = 40 mg/dL
     make_payload("dev-rdrop", "p-rdrop", 160.0, 80, "good", datetime(2026, 6, 1, 8, 10, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.NORMAL,
@@ -280,7 +282,7 @@ run_test(
 )
 run_test(
     "Statistical spike: >2 stddev above patient historical mean",
-    # p004 seeded with tight cluster ~100 mg/dL; 115 is far above mean (~100.4, stdev ~1.1)
+    # p004 seeded with tight cluster ~100 mg/dL 115 is far above mean (~100.4, stdev ~1.1)
     make_payload("dev-d", "p004", 115.0, 80, "good", datetime(2026, 5, 1, 17, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.NORMAL,
@@ -292,7 +294,6 @@ section("6 · SUSTAINED CONDITIONS")
 
 run_test(
     "Persistent hypoglycemia: <70 mg/dL sustained for 15+ min (3 readings)",
-    # Seeded: p-persis-hypo at 10:00 (65) and 10:05 (67); test at 10:10 (66)
     make_payload("dev-persis-hypo", "p-persis-hypo", 66.0, 80, "good", datetime(2026, 6, 1, 10, 10, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.LOW_GLUCOSE,
@@ -300,7 +301,6 @@ run_test(
 )
 run_test(
     "Persistent hyperglycemia: >180 mg/dL for 3+ readings in 30 min (4 readings)",
-    # Seeded: p-persis-hyper at 11:00 (200), 11:10 (210), 11:20 (195); test at 11:30 (190)
     make_payload("dev-persis-hyper", "p-persis-hyper", 190.0, 80, "good", datetime(2026, 6, 1, 11, 30, 0)),
     expect_status=IngestionStatus.SUCCESS,
     expect_threshold=AlertType.HIGH_GLUCOSE,
@@ -308,12 +308,10 @@ run_test(
 )
 
 
-# ─── 7. Device health ─────────────────────────────────────────────────────────
 section("7 · DEVICE HEALTH")
 
 run_test(
     "Sensor degraded: 3rd consecutive poor/degraded signal fires alert",
-    # Seeded: dev-sensor at 12:00 (poor) and 12:05 (degraded); test at 12:10 (poor) = 3rd
     make_payload("dev-sensor", "p-sensor", 100.0, 80, "poor", datetime(2026, 6, 1, 12, 10, 0)),
     expect_status=IngestionStatus.SUCCESS,
     reject_keys=["alert_glucose"],
@@ -321,7 +319,6 @@ run_test(
 )
 run_test(
     "Device offline: >15 min gap between readings fires alert (60 min gap)",
-    # Seeded: dev-offline last reading at 07:00; test reading at 08:00 = 60 min gap
     make_payload("dev-offline", "p-offline", 100.0, 80, "good", datetime(2026, 6, 1, 8, 0, 0)),
     expect_status=IngestionStatus.SUCCESS,
     reject_keys=["alert_glucose"],

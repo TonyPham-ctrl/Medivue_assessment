@@ -4,16 +4,18 @@ from src.models.enums import IngestionStatus
 DB_PATH = "data/medivue.db"
 DB_READING_TABLE = "readings"
 DB_PATIENT_GLUCOSE_TABLE = "patient_glucose"
+DB_ALERT_STATE_TABLE = "alert_states"
 
 # Validation
 VALID_SIGNAL_QUALITIES = ["good", "poor", "degraded"]
 GLUCOSE_MGDL_MIN = 0
 
-# Glucose safety thresholds (mg/dL)
-GLUCOSE_CRITICAL_LOW = 54
+# Glucose normal range fallback (mg/dL) — used when no per-patient bounds exist
 GLUCOSE_LOW = 70
 GLUCOSE_HIGH = 180
-GLUCOSE_CRITICAL_HIGH = 250
+
+# Critical thresholds are derived per-patient: lower_bound * (1 - margin), upper_bound * (1 + margin)
+CRITICAL_THRESHOLD_MARGIN = 0.20
 
 # Battery
 BATTERY_PCT_LOW_THRESHOLD = 20
@@ -56,3 +58,6 @@ _STATUS_MAP = {
 
 # Alert queue size limit
 MAX_QUEUE_SIZE = 100
+
+# Late-reading idempotency set size limit
+MAX_SEEN_LATE_READINGS = 10000

@@ -2,7 +2,7 @@ from src.models.enums import IngestionStatus, AlertType
 from src.service.storage_service import storage_service
 from src.config import (
     VALID_SIGNAL_QUALITIES, GLUCOSE_MGDL_MIN,
-    GLUCOSE_CRITICAL_LOW, GLUCOSE_LOW, GLUCOSE_HIGH, GLUCOSE_CRITICAL_HIGH,
+    GLUCOSE_LOW, GLUCOSE_HIGH, CRITICAL_THRESHOLD_MARGIN,
     BATTERY_PCT_LOW_THRESHOLD, BATTERY_PCT_CRITICAL_THRESHOLD,
     STAT_ANOMALY_STDDEV_MULTIPLIER,
     SUSTAINED_HYPO_MINUTES, SUSTAINED_HYPER_MINUTES, SUSTAINED_HYPER_MIN_READINGS,
@@ -39,15 +39,23 @@ class ValidationService:
 
         return response_status, response_message
 
+    def _get_patient_bounds(self, patient_id: str) -> tuple[float, float, float, float]:
+        bounds = storage_service.get_patient_glucose_bounds(patient_id)
+        low, high = bounds if bounds else (GLUCOSE_LOW, GLUCOSE_HIGH)
+        critical_low = low * (1 - CRITICAL_THRESHOLD_MARGIN)
+        critical_high = high * (1 + CRITICAL_THRESHOLD_MARGIN)
+        return critical_low, low, high, critical_high
+
     def check_glucose_threshold(self, payload) -> AlertType:
         glucose = payload.reading.glucose_mgdl
-        if glucose < GLUCOSE_CRITICAL_LOW:
+        critical_low, glucose_low, glucose_high, critical_high = self._get_patient_bounds(payload.patient_id)
+        if glucose < critical_low:
             return AlertType.CRITICAL_LOW_GLUCOSE
-        if glucose < GLUCOSE_LOW:
+        if glucose < glucose_low:
             return AlertType.LOW_GLUCOSE
-        if glucose > GLUCOSE_CRITICAL_HIGH:
+        if glucose > critical_high:
             return AlertType.CRITICAL_HIGH_GLUCOSE
-        if glucose > GLUCOSE_HIGH:
+        if glucose > glucose_high:
             return AlertType.HIGH_GLUCOSE
         return AlertType.NORMAL
 
@@ -74,16 +82,17 @@ class ValidationService:
     def check_sustained_glucose(self, payload) -> AlertType:
         glucose = payload.reading.glucose_mgdl
         ref_time = payload.reading.recorded_at
+        _, glucose_low, glucose_high, _ = self._get_patient_bounds(payload.patient_id)
 
-        if glucose < GLUCOSE_LOW:
+        if glucose < glucose_low:
             recent = storage_service.get_recent_glucose_readings(payload.patient_id, ref_time, SUSTAINED_HYPO_MINUTES)
-            if len(recent) >= 2 and all(r[0] < GLUCOSE_LOW for r in recent):
+            if len(recent) >= 2 and all(r[0] < glucose_low for r in recent):
                 return AlertType.PERSISTENT_HYPOGLYCEMIA
 
-        if glucose > GLUCOSE_HIGH:
+        if glucose > glucose_high:
             recent = storage_service.get_recent_glucose_readings(payload.patient_id, ref_time, SUSTAINED_HYPER_MINUTES)
-            high = [r for r in recent if r[0] > GLUCOSE_HIGH]
-            if len(high) >= SUSTAINED_HYPER_MIN_READINGS:
+            above_high = [r for r in recent if r[0] > glucose_high]
+            if len(above_high) >= SUSTAINED_HYPER_MIN_READINGS:
                 return AlertType.PERSISTENT_HYPERGLYCEMIA
 
         return AlertType.NORMAL

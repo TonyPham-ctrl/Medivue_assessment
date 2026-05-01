@@ -20,4 +20,5 @@ class Mobile(CommunicationDevice):
 
 class Computer(CommunicationDevice):
     def contact(self, message: str):
+        # Would implement proper contact method here if in prod
         print(f"[Desktop] {self.owner.value} ({self.contact_info}): {message}")
